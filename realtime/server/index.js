@@ -3,8 +3,16 @@ const app = express();
 const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
+const bodyParser =require('body-parser');
+const mongoose = require('mongoose');
+const messageSchema = require('./mongose');
+
 
 app.use(cors());
+
+
+
+
 const server =http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -12,17 +20,38 @@ const io = new Server(server, {
         methods : ['GET','POST'],
     },
 });
-
 io.on('connection', (socket) => {
     console.log(`user conected:${socket.id}`);
 
     socket.on('join_room',(data) => {
       socket.join(data);
       console.log(`User with id : ${socket.id} joined a room ${data}`);
-    })
+     
+    
+    });
 
     socket.on('send_message', (data) => {
-        socket.to(data.room).emit('recive_message', data);   
+        socket.to(data.room).emit('recive_message', data);  
+        
+        mongoose.connect("mongodb://localhost:27017/chat",{
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        })
+            .then(() => {
+            console.log("DB Connection Succesfull")
+            const result = new messageSchema({
+                room:data.room,
+                author: data.author,
+                message: [data.message], 
+                time: data.time
+            });
+            const test = result.save();
+        })
+            .catch((err) => {
+            console.log(err.message)
+        })
+
+
     });
 
     socket.on('disconnect', () => {
@@ -31,6 +60,12 @@ io.on('connection', (socket) => {
 });
 
 
-server.listen(3001, () => {
- console.log(`SERVER RUNNING on port 3001`);
+
+
+
+
+server.listen(3001,()=>{
+  
+    console.log('listen' )
+    
 });
