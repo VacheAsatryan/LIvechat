@@ -17,6 +17,11 @@ function App() {
       socket.emit('join_room',room)
       setShowChat(true)
     }
+    fetch(`http://localhost:3001/chat`,{
+      method:'GET'
+    })
+    .then(resp => console.log(resp))
+   
   }
 
   return (
