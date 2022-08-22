@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import ScrollToBottom from 'react-scroll-to-bottom';
 
-function Chat({socket,username,room}){
+function  Chat({allData,socket,username,room}){
     const [currentMessage ,setCurrentMessage] = useState('');
     const [messageList ,setMessageList] = useState([]);
-    
-    
+    const dataArray = Object.values(allData)
+
     const sendMessage = async () => {
         if(currentMessage !== ''){
+    
             const messageData ={
                 room: room,
                 author :username,
@@ -17,11 +18,11 @@ function Chat({socket,username,room}){
                 new Date(Date.now()).getMinutes(), 
             };
             await socket.emit('send_message',messageData);
-            setMessageList((list) => [...list, messageData]);
+            setMessageList((list) => [...list, messageData,]);
             setCurrentMessage('');
-
         }
     };
+  
     useEffect(() => {
         socket.on('recive_message', (data) => {
            setMessageList((list) => [...list, data])
@@ -34,6 +35,22 @@ function Chat({socket,username,room}){
             </div>
             <div className="chat-body">
                 <ScrollToBottom className="message-container">
+                {dataArray.map((data) => {
+                    return (
+                        <div className="message" id={username === data.data.author ? "you" : "other"} >
+                         <div>
+                            <div className="message-content">
+                                <p> {data.data.message} </p>
+                            </div>
+                            <div className="message-meta">
+                                <p id="time"> {data.data.time} </p>
+                                <p id="author" > {data.data.author} </p>
+                            </div>
+                         </div>      
+                        </div>
+                    )
+                })}
+               
                 {messageList.map((messageContent) => {
                     return (
                         <div className="message" id={username === messageContent.author ? "you" : "other"} >

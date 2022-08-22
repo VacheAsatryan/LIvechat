@@ -11,19 +11,28 @@ function App() {
   const [userName, setUserName] = useState('');
   const [room, setRoom] = useState('');
   const [showChat, setShowChat] = useState(false);
-
-  const joinRoom = () => {
+  let [allData, setAllData] = useState({});
+  
+ 
+  const joinRoom = async () => {
     if(room !== '' && userName !== ''){
       socket.emit('join_room',room)
       setShowChat(true)
-    }
-    fetch(`http://localhost:3001/chat`,{
-      method:'GET'
+      const roomName = room;
+  
+   await fetch('http://localhost:3001/chat', {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json' },
+      body: JSON.stringify({ room: roomName }),
     })
-    .then(resp => console.log(resp))
-   
+    .then(response => response.json())
+    .then((data) => {  
+     setAllData(data)
+      console.log(allData, '@@@')
+    });
   }
 
+  }
   return (
     <div className="App">
      {!showChat ? ( <div className='joinChatContainer'>
@@ -39,7 +48,7 @@ function App() {
       onChange={(e)=>{setRoom(e.target.value)}}/>
        <button onClick={joinRoom} >Join</button>
        </div>) : ( 
-       <Chat socket={socket} username={userName}  room={room} />
+       <Chat socket={socket} username={userName}  room={room} allData={allData} />
         )}
     </div>
    

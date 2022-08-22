@@ -1,17 +1,16 @@
-    const express = require('express');
-    const app = express();
-    const http = require('http');
-    const cors = require('cors');
-    const { Server } = require('socket.io');
-    const bodyParser =require('body-parser');
-    const mongoose = require('mongoose');
-    
-    const messageSchema = require('./mongose');
-    const router = express.Router();
-    const url = "mongodb://localhost:27017/";
-
+const express = require('express');
+const app = express();
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
+const bodyParser =require('body-parser');
+const mongoose = require('mongoose');
+const messageSchema = require('./mongose');
+const router = express.Router();
+const url = "mongodb://localhost:27017/";
 app.use(cors());
-
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json());
 const server =http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -19,7 +18,7 @@ const io = new Server(server, {
         methods : ['GET','POST'],
     },
 });
-const
+
 io.on('connection', (socket) => {
     console.log(`user conected:${socket.id}`);
 
@@ -29,8 +28,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send_message', (data) => {
-        socket.to(data.room).emit('recive_message', data);  
-        
+     socket.to(data.room).emit('recive_message', data); 
+
         mongoose.connect(url,{
             useNewUrlParser: true,
             useUnifiedTopology: true,
@@ -38,12 +37,12 @@ io.on('connection', (socket) => {
             .then(() => {
             console.log("DB Connection Succesfull")
             const result = new messageSchema({
-                data:{
+               data:{
                 room:data.room,
                 author: data.author,
-                message: [data.message], 
+                message: data.message, 
                 time: data.time
-                },
+               },
             });
             const test = result.save();
         })
@@ -51,11 +50,24 @@ io.on('connection', (socket) => {
             console.log(err.message)
         });
     });
- 
+      
     socket.on('disconnect', () => {
         console.log(`User Disconectid`, socket.id);
     });
 });
+
+
+
+
+app.post('/chat', async (req, res) => {
+ const roomName = req.body.room
+ console.log("roomname", roomName)
+ const finder = await messageSchema.find({"data.room":`${roomName}`});
+ console.log(finder, "finddddd");
+ res.send(finder);
+
+});
+
 
 server.listen(3001,() => {
     console.log('listen' )
